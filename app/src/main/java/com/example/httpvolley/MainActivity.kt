@@ -7,8 +7,7 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.Response.Listener
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
+import com.android.volley.toolbox.*
 import com.example.httpvolley.databinding.ActivityMainBinding
 import org.json.JSONObject
 
@@ -26,16 +25,27 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
-        // RequestQueue initialized
-        val queue: RequestQueue = Volley.newRequestQueue(this)
+
+        // Instantiate the cache
+        val cache = DiskBasedCache(cacheDir, 1024 * 1024) // 1MB cap
+
+        // Set up the network to use HttpURLConnection as the HTTP client.
+        val network = BasicNetwork(HurlStack())
+
+        // Instantiate the RequestQueue with the cache and network. Start the queue.
+        val requestQueue = RequestQueue(cache, network).apply {
+            start()
+        }
+//        // RequestQueue initialized para enviar una solicitud simple
+//        val queue: RequestQueue = Volley.newRequestQueue(this)
 
         //jsonObject con los datos a enviar
         val jsonObject = CreateMap("Id", "OpPhone", "ClientPhone", "Type", "00:00:05", "Date")
 
         //Request: Url, objeto y listeners de respuesta de exito o error
-        val request = JsonObjectRequest(Request.Method.POST, URL, jsonObject, Response.Listener { response -> Toast.makeText(getApplicationContext(),"Response :" + response.toString(), Toast.LENGTH_LONG).show() }, { error -> error.printStackTrace()}) //null es el objeto json a enviar, respuesta y error
+        val request = JsonObjectRequest(Request.Method.POST, URL, jsonObject, Response.Listener { response -> binding.tv1.setText(response.toString()) }, { error -> error.printStackTrace()}) //null es el objeto json a enviar, respuesta y error
 
-        queue.add(request)
+        requestQueue.add(request)
     }
     //Método para crear Hash map con los parámetros a enviar
     private fun CreateMap(id: String, opPhone: String, clientPhone: String, type: String,
